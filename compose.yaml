@@ -1,0 +1,46 @@
+name: events-aggregator
+
+services:
+  postgres:
+    image: postgres:17-alpine@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73
+    environment:
+      POSTGRES_DB: events
+      POSTGRES_USER: events
+      POSTGRES_PASSWORD: events
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U events -d events"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+    init: true
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+      DATABASE_URL: postgresql+asyncpg://events:events@postgres:5432/events
+      EVENTS_PROVIDER_BASE_URL: ${EVENTS_PROVIDER_BASE_URL:-https://events-provider.dev-2.python-labs.ru}
+      EVENTS_PROVIDER_API_KEY: ${EVENTS_PROVIDER_API_KEY:-}
+      EVENTS_PROVIDER_AUTH_MODE: ${EVENTS_PROVIDER_AUTH_MODE:-api_key}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SEATS_CACHE_TTL_SECONDS: ${SEATS_CACHE_TTL_SECONDS:-30}
+      SYNC_ENABLED: ${SYNC_ENABLED:-false}
+      SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-86400}
+      SYNC_RUN_ON_STARTUP: ${SYNC_RUN_ON_STARTUP:-true}
+      WEB_CONCURRENCY: 1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+volumes:
+  postgres-data:
