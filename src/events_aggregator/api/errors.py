@@ -33,6 +33,14 @@ async def _provider_error_handler(request: Request, exc: Exception) -> JSONRespo
     )
 
 
+async def _sync_in_progress_handler(request: Request, exc: Exception) -> JSONResponse:
+    del request, exc
+    return JSONResponse(
+        status_code=status.HTTP_202_ACCEPTED,
+        content={"status": "already_running"},
+    )
+
+
 def register_error_handlers(application: FastAPI) -> None:
     for error_type in (EventNotFoundError, TicketNotFoundError, ProviderNotFoundError):
         application.add_exception_handler(error_type, _not_found_handler)
@@ -40,7 +48,7 @@ def register_error_handlers(application: FastAPI) -> None:
         EventUnavailableError,
         RegistrationClosedError,
         ProviderConflictError,
-        SyncInProgressError,
     ):
         application.add_exception_handler(error_type, _conflict_handler)
+    application.add_exception_handler(SyncInProgressError, _sync_in_progress_handler)
     application.add_exception_handler(ProviderError, _provider_error_handler)

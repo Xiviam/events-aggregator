@@ -9,4 +9,6 @@ alembic upgrade head
 exec uvicorn events_aggregator.main:app \
     --host "${APP_HOST:-0.0.0.0}" \
     --port "$port" \
-    --workers "$workers"
+    --workers "$workers" \
+    --proxy-headers \
+    --forwarded-allow-ips "${FORWARDED_ALLOW_IPS:-*}"

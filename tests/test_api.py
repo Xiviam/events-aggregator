@@ -221,8 +221,9 @@ async def test_production_error_handlers(
     assert provider_failure.status_code == 502
 
     api_context.coordinator.run.side_effect = SyncInProgressError("already running")
-    conflict = await api_client.post("/api/sync/trigger")
-    assert conflict.status_code == 409
+    in_progress = await api_client.post("/api/sync/trigger")
+    assert in_progress.status_code == 202
+    assert in_progress.json() == {"status": "already_running"}
 
 
 async def test_health_returns_503_when_database_is_unavailable(
