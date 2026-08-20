@@ -201,7 +201,7 @@ async def test_ticket_payload_validation_happens_before_dependencies(
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 400
     api_context.events.get.assert_not_awaited()
     api_context.provider.register.assert_not_awaited()
 
