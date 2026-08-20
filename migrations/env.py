@@ -34,19 +34,14 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    connection.execute(
-        text("SELECT pg_advisory_lock(:key)"),
-        {"key": MIGRATION_ADVISORY_LOCK_KEY},
-    )
-    try:
+    with connection.begin():
+        connection.execute(
+            text("SELECT pg_advisory_xact_lock(:key)"),
+            {"key": MIGRATION_ADVISORY_LOCK_KEY},
+        )
         context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
         with context.begin_transaction():
             context.run_migrations()
-    finally:
-        connection.execute(
-            text("SELECT pg_advisory_unlock(:key)"),
-            {"key": MIGRATION_ADVISORY_LOCK_KEY},
-        )
 
 
 async def run_async_migrations() -> None:
